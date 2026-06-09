@@ -85,6 +85,15 @@ div[data-testid="stVerticalBlock"]>div{gap:0.6rem;}
 /* section headers */
 .fc-section{font-size:12px;font-weight:600;color:var(--ink-2);text-transform:uppercase;letter-spacing:.06em;font-family:var(--sans);margin:4px 0 8px;display:flex;align-items:center;gap:8px;}
 .fc-section::after{content:"";flex:1;height:1px;background:var(--line);}
+/* KPI stat cards (match the design mockup) */
+.fc-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;}
+.fc-stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px 18px;box-shadow:var(--shadow);}
+.fc-stat-val{font-size:30px;font-weight:600;line-height:1;letter-spacing:-.02em;font-family:var(--sans);}
+.fc-stat-label{font-size:12px;color:var(--ink-3);margin-top:9px;font-family:var(--sans);}
+@media(max-width:900px){.fc-stats{grid-template-columns:repeat(2,1fr);}}
+/* results table polish */
+.stDataFrame tbody tr:hover td{background:var(--surface-2) !important;}
+.stCaption,.stCaption p{font-family:var(--mono) !important;font-size:11px !important;color:var(--ink-3) !important;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -477,13 +486,29 @@ if "results_df" in st.session_state:
         mismatch = (results_df["Status"] == "mismatch").sum()
         missing = (results_df["Status"] == "missing").sum()
         not_found = (results_df["Status"] == "row_not_found").sum()
+        match_rate = round(100 * matched / total) if total else 0
 
-        m1, m2, m3, m4, m5 = st.columns(5)
-        m1.metric("Total checks", total)
-        m2.metric("✅ Match", matched)
-        m3.metric("🔴 Mismatch", mismatch)
-        m4.metric("🟡 No value (small)", missing)
-        m5.metric("⚪ Row not in big", not_found)
+        # Polished KPI cards (matches the Claude design mockup)
+        st.markdown(f"""
+<div class="fc-stats">
+  <div class="fc-stat">
+    <div class="fc-stat-val" style="color:var(--accent)">{total:,}</div>
+    <div class="fc-stat-label">Cells compared</div>
+  </div>
+  <div class="fc-stat">
+    <div class="fc-stat-val" style="color:var(--ok)">{match_rate}%</div>
+    <div class="fc-stat-label">Match rate</div>
+  </div>
+  <div class="fc-stat">
+    <div class="fc-stat-val" style="color:var(--bad)">{mismatch:,}</div>
+    <div class="fc-stat-label">Mismatches</div>
+  </div>
+  <div class="fc-stat">
+    <div class="fc-stat-val" style="color:var(--warn)">{missing + not_found:,}</div>
+    <div class="fc-stat-label">Missing / not found</div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
 
         status_labels = {"match": "✅ Match", "mismatch": "🔴 Mismatch",
                          "missing": "🟡 No value (small)", "row_not_found": "⚪ Row not in big"}
